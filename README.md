@@ -1,4 +1,13 @@
 # VTXControl
+FORKED from below details. Idea is to use actual ESP32 not the Arduino version so that we don't need avr library that is used in the code and move from software serial to using Serial2, since a normal esp board has two serials.
+
+Will include a test file later and if this POC is successful, other details on the setup and requirements.
+
+
+
+Original README:
+
+
 Arduino library providing video transmitter (VTX) control by SmartAudio/Tramp protocol.
 
 This C/C++ code uses modified SoftwareSerialWithHalfDuplex library (part code taken from CustomSoftwareSerial to support different configuration of serial port (especially 8N2)), some code taken from BetaFlight and ArduPilot (SmartAudio and Tramp protocols support) code.
