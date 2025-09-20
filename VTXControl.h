@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <SoftwareSerialWithHalfDuplex.h>
+#include "Serial2WithHalfDuplex.h"
 #include "VTX_SmartAudio.h"
 #include "VTX_Tramp.h"
 #ifndef VTXControl_h
@@ -76,7 +76,7 @@ public:
   bool testSMAResponseFromSerial1();
 #endif
 private:
-  SoftwareSerialWithHalfDuplex* port;
+  Serial2WithHalfDuplex* port;
   int vtx_mode = VTXMode::SmartAudio;//default
   VTXErrors errors = VTXErrors::vtxNoErrors;
   long sa_offerNewSpeed(long currentSpeed);//tries to offer other baud rate to work with vtx

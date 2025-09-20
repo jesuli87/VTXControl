@@ -1,9 +1,9 @@
 #include <Arduino.h>
-#include <util/delay.h>
+//#include <util/delay.h> -> not needed for esp32
 #include "VTXControl.h"
 #include "VTX_SmartAudio.h"
 #include "VTX_Tramp.h"
-#include "SoftwareSerialWithHalfDuplex.h"
+#include "Serial2WithHalfDuplex.h" --> harware uart for esp32
 
 //these parameters for EACHINE TX5258
 const uint16_t powers[4] = { 25, 200, 500, 800 };//in mW
@@ -21,11 +21,11 @@ const uint16_t freqs[40] = {
 };
 
 // Instantiates the VTX object with the specified parameters
-VTXControl::VTXControl(int vtxMode, int softPin, int responseTimeOut = 1000, bool smartBaudRate = true, int numtries=3)
+VTXControl::VTXControl(int vtxMode, int softPin, int responseTimeOut, bool smartBaudRate, int numtries)
 {    
   DEBUG("VTXControl: Create");
   vtx_mode = vtxMode;
-  port = new SoftwareSerialWithHalfDuplex(softPin, softPin, false, false);
+  port = new Serial2WithHalfDuplex(softPin, softPin, false, false);
   _responseTimeOut = responseTimeOut;
   _numtries = numtries;
   _smartBaudRate = smartBaudRate;
@@ -55,23 +55,23 @@ long VTXControl::getSpeed()
 }
 VTXErrors VTXControl::getErrors()
 {
-  sswhdErrors err = port->getErrors();
-  if (err != sswhdErrors::sswhdNoErrors)
-  {
-    if (err & sswhdErrors::sswhdIsNotListening != 0)
-      errors |= vtxportIsNotListening;
-    if (err & sswhdErrors::sswhdBufferIsEmpty != 0)
-      errors |= vtxportBufferIsEmpty;
-    if (err & sswhdErrors::sswhdTxDelayIsZero != 0)
-      errors |= vtxportTxDelayIsZero;
-    if (err & sswhdErrors::sswhdRXDelayStopBitNotSet != 0)
-      errors |= vtxportRXDelayStopBitNotSet;
-  }
-  return errors;
+    sswhdErrors err = port->getErrors();
+    VTXErrors errors = vtxNoErrors;
+
+    if (err & sswhdIsNotListening)
+        errors = static_cast<VTXErrors>(static_cast<int>(errors) | static_cast<int>(vtxportIsNotListening));
+    if (err & sswhdBufferIsEmpty)
+        errors = static_cast<VTXErrors>(static_cast<int>(errors) | static_cast<int>(vtxportBufferIsEmpty));
+    if (err & sswhdTxDelayIsZero)
+        errors = static_cast<VTXErrors>(static_cast<int>(errors) | static_cast<int>(vtxportTxDelayIsZero));
+    if (err & sswhdRXDelayStopBitNotSet)
+        errors = static_cast<VTXErrors>(static_cast<int>(errors) | static_cast<int>(vtxportRXDelayStopBitNotSet));
+
+    return errors;
 }
 void VTXControl::setError(VTXErrors error)
 {
-  errors |= error;
+  errors = static_cast<VTXErrors>(static_cast<int>(errors) | static_cast<int>(error));
 }
 bool VTXControl::sa_updateSettings()
 {
@@ -190,7 +190,7 @@ bool VTXControl::sa_setPower(int pwrLevel)
   DEBUG("sa_setPower, push to write:" + (String)sizeof(buf));
   //according to SA documentation:
   //The SmartAudio line need to be low before a frame is sent. 
-  //If the host MCU can’t handle this it can be done by
+  //If the host MCU canпїЅt handle this it can be done by
   //sending a 0x00 dummy byte in front of the actual frame.  
   port->writeDummyByte();
   bool res = port->write((uint8_t*)&buf, sizeof(buf)) == sizeof(buf);
@@ -209,7 +209,7 @@ bool VTXControl::sa_setChannel(uint8_t channel)
   DEBUG("sa_setChannel, push to write:" + (String)sizeof(buf));
   //according to SA documentation:
   //The SmartAudio line need to be low before a frame is sent. 
-  //If the host MCU can’t handle this it can be done by
+  //If the host MCU canпїЅt handle this it can be done by
   //sending a 0x00 dummy byte in front of the actual frame.  
   port->writeDummyByte();
   bool res = port->write((uint8_t*)&buf, sizeof(buf)) == sizeof(buf);
@@ -227,7 +227,7 @@ bool VTXControl::sa_getSettings()
   DEBUG("sa_GetSettings, push to write:" + (String)sizeof(buf));  
   //according to SA documentation:
   //The SmartAudio line need to be low before a frame is sent. 
-  //If the host MCU can’t handle this it can be done by
+  //If the host MCU canпїЅt handle this it can be done by
   //sending a 0x00 dummy byte in front of the actual frame.
   port->writeDummyByte();
   //port->write((uint8_t)0x00);
@@ -1024,7 +1024,7 @@ bool VTXControl::trampReadResponse()
     port->flush();    
     // successful response, wait another 100ms to give the VTX a chance to recover
     // before sending another command.
-    delay(100);//здесь можно использовать delay
+    delay(100);//пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ delay
     DEBUG("trampReadResponse:Succesfull");
     return true;
   }
